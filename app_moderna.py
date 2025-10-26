@@ -12,24 +12,26 @@ from config_segura import ConfigSegura
 from logging_utils import configurar_logger
 
 
-# 🎨 Paleta de colores moderna
+# 🎨 Paleta de colores moderna (mejorada para legibilidad)
 COLORS = {
-    'bg_dark': '#05070f',            # Fondo principal
-    'bg_darker': '#03040b',          # Fondo más oscuro
-    'bg_card': '#0b1324',            # Contenedores
+    'bg_dark': '#0a0e1a',            # Fondo principal (más claro)
+    'bg_darker': '#060913',          # Fondo más oscuro
+    'bg_card': '#121829',            # Contenedores (más contraste)
     'accent': '#38bdf8',             # Azul cyan brillante
     'accent_hover': '#0ea5e9',       # Hover para acento
-    'success': '#22d3ee',            # Botón principal
+    'success': '#06b6d4',            # Botón principal (cyan más oscuro, mejor contraste)
     'warning': '#facc15',            # Advertencias
-    'text': '#f8fafc',               # Texto principal
-    'text_dim': '#94a3b8',           # Texto secundario
-    'border': '#1f2937',             # Bordes sutiles
-    'input_bg': '#0f172a',           # Fondo de inputs
-    'input_border': '#1e293b',       # Borde inputs
+    'text': '#ffffff',               # Texto principal (blanco puro)
+    'text_dim': '#cbd5e1',           # Texto secundario (más claro)
+    'border': '#2d3748',             # Bordes más visibles
+    'input_bg': '#1e293b',           # Fondo de inputs (más claro)
+    'input_border': '#334155',       # Borde inputs (más visible)
     'shadow': '#020617',             # Sombra suave
-    'gradient_start': '#111c33',     # Gradiente header
-    'gradient_end': '#050a18',       # Gradiente header (fin)
-    'button_disabled': '#1f2a3a'     # Botón deshabilitado
+    'gradient_start': '#1e293b',     # Gradiente header (más claro)
+    'gradient_end': '#0a0e1a',       # Gradiente header (fin)
+    'button_disabled': '#334155',    # Botón deshabilitado (más visible)
+    'button_secondary': '#475569',   # Botones secundarios
+    'button_secondary_hover': '#64748b'  # Hover secundario
 }
 
 
@@ -425,8 +427,9 @@ class ExtractorModerno:
         self.btn_rotar_clave.pack(side='left')
         self.estilizar_boton_flat(
             self.btn_rotar_clave,
-            COLORS['bg_darker'],
-            COLORS['border'],
+            COLORS['button_secondary'],
+            COLORS['button_secondary_hover'],
+            fg=COLORS['text'],
             padding_y=8,
             padding_x=14
         )
@@ -440,8 +443,9 @@ class ExtractorModerno:
         self.btn_borrar_config.pack(side='left', padx=(10, 0))
         self.estilizar_boton_flat(
             self.btn_borrar_config,
-            COLORS['bg_darker'],
-            COLORS['border'],
+            COLORS['button_secondary'],
+            COLORS['button_secondary_hover'],
+            fg=COLORS['text'],
             padding_y=8,
             padding_x=14
         )
