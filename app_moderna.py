@@ -1,5 +1,6 @@
 """Interfaz moderna y reforzada para el extractor bancario."""
 
+import math
 import os
 import sys
 import threading
@@ -13,44 +14,81 @@ from logging_utils import configurar_logger
 
 # 🎨 Paleta de colores moderna
 COLORS = {
-    'bg_dark': '#1a1a2e',           # Fondo principal oscuro
-    'bg_darker': '#16213e',         # Fondo más oscuro
-    'bg_card': '#0f3460',           # Fondo de tarjetas
-    'accent': '#00d4ff',            # Azul cyan brillante
-    'accent_hover': '#00b8e6',      # Azul hover
-    'success': '#00ff88',           # Verde éxito
-    'warning': '#ffa500',           # Naranja advertencia
-    'text': '#e8e8e8',              # Texto principal
-    'text_dim': '#a0a0a0',          # Texto secundario
-    'border': '#2d3748',            # Bordes
-    'input_bg': '#1f2937',          # Fondo de inputs
-    'input_border': '#374151'       # Borde de inputs
+    'bg_dark': '#05070f',            # Fondo principal
+    'bg_darker': '#03040b',          # Fondo más oscuro
+    'bg_card': '#0b1324',            # Contenedores
+    'accent': '#38bdf8',             # Azul cyan brillante
+    'accent_hover': '#0ea5e9',       # Hover para acento
+    'success': '#22d3ee',            # Botón principal
+    'warning': '#facc15',            # Advertencias
+    'text': '#f8fafc',               # Texto principal
+    'text_dim': '#94a3b8',           # Texto secundario
+    'border': '#1f2937',             # Bordes sutiles
+    'input_bg': '#0f172a',           # Fondo de inputs
+    'input_border': '#1e293b',       # Borde inputs
+    'shadow': '#020617',             # Sombra suave
+    'gradient_start': '#111c33',     # Gradiente header
+    'gradient_end': '#050a18',       # Gradiente header (fin)
+    'button_disabled': '#1f2a3a'     # Botón deshabilitado
 }
 
 
+def hex_to_rgb(value):
+    """Convierte un color hex a tupla RGB."""
+    value = value.lstrip('#')
+    return tuple(int(value[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def rgb_to_hex(rgb):
+    """Convierte RGB a color hexadecimal."""
+    return '#%02x%02x%02x' % rgb
+
+
+def blend_colors(color_a, color_b, factor):
+    """Mezcla dos colores hex con un factor [0-1]."""
+    factor = max(0.0, min(1.0, factor))
+    ra, ga, ba = hex_to_rgb(color_a)
+    rb, gb, bb = hex_to_rgb(color_b)
+    rc = int(ra + (rb - ra) * factor)
+    gc = int(ga + (gb - ga) * factor)
+    bc = int(ba + (bb - ba) * factor)
+    return rgb_to_hex((rc, gc, bc))
+
+
 class ModernButton(tk.Canvas):
-    """Botón moderno personalizado con efectos hover"""
-    
+    """Botón moderno personalizado con efectos hover y brillo sutil."""
+
     def __init__(self, parent, text, command, bg_color, fg_color, width=200, height=50):
-        super().__init__(parent, width=width, height=height, 
-                        bg=COLORS['bg_dark'], highlightthickness=0)
-        
+        super().__init__(parent, width=width, height=height,
+                         bg=COLORS['bg_dark'], highlightthickness=0, bd=0)
+
         self.command = command
-        self.bg_color = bg_color
+        self.base_color = bg_color
         self.fg_color = fg_color
         self.hover_color = COLORS['accent_hover']
-        
+        self.is_hover = False
+        self.pulse_enabled = True
+        self.glow_phase = 0.0
+
+        # Sombra suave
+        self.shadow = self.create_rounded_rect(6, 8, width - 2, height + 6,
+                                               radius=14, fill=COLORS['shadow'])
+
         # Crear rectángulo con bordes redondeados
-        self.rect = self.create_rounded_rect(0, 0, width, height, 
-                                             radius=10, fill=bg_color)
-        self.text_id = self.create_text(width/2, height/2, 
-                                       text=text, fill=fg_color, 
-                                       font=('SF Pro Display', 14, 'bold'))
-        
+        self.rect = self.create_rounded_rect(0, 0, width, height,
+                                             radius=12, fill=self.base_color)
+        self.text_id = self.create_text(width / 2, height / 2,
+                                        text=text, fill=fg_color,
+                                        font=('SF Pro Display', 14, 'bold'))
+
+        self.tag_lower(self.shadow)
+
         # Eventos
         self.bind('<Enter>', self.on_enter)
         self.bind('<Leave>', self.on_leave)
         self.bind('<Button-1>', self.on_click)
+
+        self.after(40, self.animate_glow)
         
     def create_rounded_rect(self, x1, y1, x2, y2, radius, **kwargs):
         """Crea rectángulo con bordes redondeados"""
@@ -80,18 +118,54 @@ class ModernButton(tk.Canvas):
     
     def on_enter(self, e):
         """Efecto hover"""
+        self.is_hover = True
         self.itemconfig(self.rect, fill=self.hover_color)
         self.config(cursor='hand2')
-    
+
     def on_leave(self, e):
         """Quitar hover"""
-        self.itemconfig(self.rect, fill=self.bg_color)
+        self.is_hover = False
+        self.itemconfig(self.rect, fill=self.base_color)
         self.config(cursor='')
-    
+
     def on_click(self, e):
         """Ejecutar comando"""
         if self.command:
             self.command()
+
+    def set_base_color(self, color):
+        """Actualiza el color base del botón."""
+        self.base_color = color
+        if not self.is_hover:
+            self.itemconfig(self.rect, fill=self.base_color)
+
+    def set_text(self, text):
+        """Actualiza el texto del botón."""
+        self.itemconfig(self.text_id, text=text)
+
+    def set_text_color(self, color):
+        """Actualiza el color del texto del botón."""
+        self.fg_color = color
+        self.itemconfig(self.text_id, fill=color)
+
+    def set_pulse(self, enabled):
+        """Activa o desactiva la animación de brillo."""
+        self.pulse_enabled = enabled
+        if not enabled and not self.is_hover:
+            self.itemconfig(self.rect, fill=self.base_color)
+
+    def animate_glow(self):
+        """Animación de brillo sutil."""
+        if self.pulse_enabled and not self.is_hover:
+            pulse = (math.sin(self.glow_phase) + 1) / 2  # 0-1
+            blend_factor = 0.08 + pulse * 0.10
+            glow_color = blend_colors(self.base_color, COLORS['accent'], blend_factor)
+            self.itemconfig(self.rect, fill=glow_color)
+            self.glow_phase += 0.12
+        elif not self.is_hover:
+            self.itemconfig(self.rect, fill=self.base_color)
+
+        self.after(45, self.animate_glow)
 
 
 logger, LOG_PATH = configurar_logger("app.ui")
@@ -164,75 +238,96 @@ class ExtractorModerno:
     def crear_interfaz(self):
         """Crea la interfaz moderna"""
         
+        self.wave_offset = -240
+
         # 🎨 HEADER CON GRADIENTE
-        header = tk.Canvas(self.root, height=120, bg=COLORS['bg_darker'], 
-                          highlightthickness=0)
-        header.pack(fill='x')
-        
+        self.header_canvas = tk.Canvas(
+            self.root,
+            height=120,
+            bg=COLORS['bg_darker'],
+            highlightthickness=0,
+            bd=0
+        )
+        self.header_canvas.pack(fill='x')
+
+        # Línea de acento animada
+        self.header_wave = self.header_canvas.create_rectangle(
+            -240, 116, -20, 120,
+            fill=COLORS['accent'],
+            outline='',
+            width=0,
+            tags='accent_wave'
+        )
+
         # Título grande
-        header.create_text(450, 45, 
-                          text="🤖 Extractor Bancario IA", 
-                          font=('SF Pro Display', 32, 'bold'),
-                          fill=COLORS['text'])
-        
+        self.header_canvas.create_text(
+            450,
+            45,
+            text="🤖 Extractor Bancario IA",
+            font=('SF Pro Display', 32, 'bold'),
+            fill=COLORS['text'],
+            tags='header_title'
+        )
+
         # Subtítulo
-        header.create_text(450, 85,
-                          text="Procesa tus extractos con Inteligencia Artificial",
-                          font=('SF Pro Text', 13),
-                          fill=COLORS['text_dim'])
+        self.header_canvas.create_text(
+            450,
+            85,
+            text="Procesa tus extractos con Inteligencia Artificial",
+            font=('SF Pro Text', 13),
+            fill=COLORS['text_dim'],
+            tags='header_subtitle'
+        )
 
         # Botones de acción del header
-        header_buttons = tk.Frame(header, bg=COLORS['bg_darker'])
-        header.create_window(820, 60, window=header_buttons)
+        header_buttons = tk.Frame(self.header_canvas, bg=COLORS['bg_darker'], highlightthickness=0)
+        self.header_canvas.create_window(820, 60, window=header_buttons)
 
         btn_seguridad = tk.Button(
             header_buttons,
             text="🔒 Seguridad",
             font=('SF Pro Text', 10, 'bold'),
-            bg=COLORS['bg_card'],
-            fg=COLORS['text'],
-            activebackground=COLORS['accent_hover'],
-            activeforeground=COLORS['bg_dark'],
-            relief='flat',
-            cursor='hand2',
             command=self.mostrar_info_seguridad
         )
         btn_seguridad.pack(side='left', padx=5)
+        self.estilizar_boton_flat(btn_seguridad, COLORS['bg_card'], COLORS['accent_hover'], padding_y=6, padding_x=12)
 
         btn_logs = tk.Button(
             header_buttons,
             text="📁 Logs",
             font=('SF Pro Text', 10, 'bold'),
-            bg=COLORS['bg_card'],
-            fg=COLORS['text'],
-            activebackground=COLORS['accent_hover'],
-            activeforeground=COLORS['bg_dark'],
-            relief='flat',
-            cursor='hand2',
             command=self.abrir_logs
         )
         btn_logs.pack(side='left', padx=5)
+        self.estilizar_boton_flat(btn_logs, COLORS['bg_card'], COLORS['accent_hover'], padding_y=6, padding_x=12)
 
         # Container principal con padding
         main = tk.Frame(self.root, bg=COLORS['bg_dark'])
         main.pack(fill='both', expand=True, padx=40, pady=30)
-        
+
         # 📦 CARD DE CONFIGURACIÓN
-        config_card = tk.Frame(main, bg=COLORS['bg_card'], relief='flat')
+        config_card = tk.Frame(
+            main,
+            bg=COLORS['bg_card'],
+            relief='flat',
+            bd=0,
+            highlightthickness=1,
+            highlightbackground=COLORS['border']
+        )
         config_card.pack(fill='x', pady=(0, 20))
-        
-        config_inner = tk.Frame(config_card, bg=COLORS['bg_card'])
+
+        config_inner = tk.Frame(config_card, bg=COLORS['bg_card'], bd=0)
         config_inner.pack(fill='x', padx=25, pady=25)
-        
+
         # Estado
         estado_frame = tk.Frame(config_inner, bg=COLORS['bg_card'])
         estado_frame.pack(fill='x', pady=(0, 20))
-        
+
         self.label_estado = tk.Label(
             estado_frame,
             text="",
             font=('SF Pro Text', 11),
-            fg=COLORS['text_dim'],
+            fg=COLORS['text'],
             bg=COLORS['bg_card']
         )
         self.label_estado.pack(side='left')
@@ -241,7 +336,7 @@ class ExtractorModerno:
             estado_frame,
             text=f"🔐 Directorio seguro: {self.secure_dir}",
             font=('SF Pro Text', 9),
-            fg=COLORS['text_dim'],
+            fg=COLORS['accent'],
             bg=COLORS['bg_card']
         )
         self.badge_seguridad.pack(side='left', padx=(10, 0))
@@ -281,37 +376,41 @@ class ExtractorModerno:
             state='readonly',
             readonlybackground=COLORS['input_bg']
         )
-        self.carpeta_entry.pack(side='left', fill='x', expand=True, 
+        self.carpeta_entry.pack(side='left', fill='x', expand=True,
                                ipady=10, padx=(0, 10))
-        
+        self.estilizar_entry(self.carpeta_entry)
+
         self.btn_carpeta = tk.Button(
             carpeta_frame,
             text="Buscar",
             font=('SF Pro Text', 11),
-            bg=COLORS['bg_darker'],
-            fg=COLORS['text'],
-            activebackground=COLORS['border'],
-            activeforeground=COLORS['text'],
-            relief='flat',
-            cursor='hand2',
             padx=20,
             command=self.seleccionar_carpeta
         )
         self.btn_carpeta.pack(side='right')
-        
+        self.estilizar_boton_flat(
+            self.btn_carpeta,
+            COLORS['accent'],
+            COLORS['accent_hover'],
+            fg=COLORS['bg_dark'],
+            padding_y=8,
+            padding_x=None
+        )
+
         # Botón guardar config
         self.btn_guardar_config = tk.Button(
             config_inner,
             text="💾  Guardar Configuración",
             font=('SF Pro Text', 12, 'bold'),
-            bg=COLORS['accent'],
-            fg=COLORS['bg_dark'],
-            activebackground=COLORS['accent_hover'],
-            activeforeground=COLORS['bg_dark'],
-            relief='flat',
-            cursor='hand2',
-            pady=12,
             command=self.guardar_configuracion
+        )
+        self.estilizar_boton_flat(
+            self.btn_guardar_config,
+            COLORS['accent'],
+            COLORS['accent_hover'],
+            fg=COLORS['bg_dark'],
+            padding_y=12,
+            padding_x=None
         )
 
         acciones_frame = tk.Frame(config_inner, bg=COLORS['bg_card'])
@@ -321,29 +420,31 @@ class ExtractorModerno:
             acciones_frame,
             text="🔁 Rotar clave de cifrado",
             font=('SF Pro Text', 10, 'bold'),
-            bg=COLORS['bg_darker'],
-            fg=COLORS['text'],
-            activebackground=COLORS['accent_hover'],
-            activeforeground=COLORS['bg_dark'],
-            relief='flat',
-            cursor='hand2',
             command=self.rotar_clave
         )
         self.btn_rotar_clave.pack(side='left')
+        self.estilizar_boton_flat(
+            self.btn_rotar_clave,
+            COLORS['bg_darker'],
+            COLORS['border'],
+            padding_y=8,
+            padding_x=14
+        )
 
         self.btn_borrar_config = tk.Button(
             acciones_frame,
             text="🧹 Borrar configuración",
             font=('SF Pro Text', 10, 'bold'),
-            bg=COLORS['bg_darker'],
-            fg=COLORS['text'],
-            activebackground=COLORS['accent_hover'],
-            activeforeground=COLORS['bg_dark'],
-            relief='flat',
-            cursor='hand2',
             command=self.eliminar_configuracion
         )
         self.btn_borrar_config.pack(side='left', padx=(10, 0))
+        self.estilizar_boton_flat(
+            self.btn_borrar_config,
+            COLORS['bg_darker'],
+            COLORS['border'],
+            padding_y=8,
+            padding_x=14
+        )
 
         # 🚀 BOTÓN PRINCIPAL GRANDE
         btn_container = tk.Frame(main, bg=COLORS['bg_dark'])
@@ -369,7 +470,13 @@ class ExtractorModerno:
             bg=COLORS['bg_dark']
         ).pack(anchor='w', pady=(0, 10))
         
-        log_frame = tk.Frame(main, bg=COLORS['input_border'])
+        log_frame = tk.Frame(
+            main,
+            bg=COLORS['bg_card'],
+            highlightthickness=1,
+            highlightbackground=COLORS['border'],
+            bd=0
+        )
         log_frame.pack(fill='both', expand=True)
 
         self.log_text = scrolledtext.ScrolledText(
@@ -384,16 +491,22 @@ class ExtractorModerno:
             pady=15
         )
         self.log_text.pack(fill='both', expand=True, padx=2, pady=2)
-        
+        self.log_text.configure(highlightthickness=1, highlightbackground=COLORS['input_border'])
+
         # Barra de progreso
-        self.progress = ttk.Progressbar(main, mode='indeterminate')
+        self.progress = ttk.Progressbar(main, mode='indeterminate', style='Accent.Horizontal.TProgressbar')
 
         # Configurar estilo de progreso para un look más moderno
         style = ttk.Style()
         style.theme_use('clam')
-        style.configure('TProgressbar', troughcolor=COLORS['bg_dark'],
-                        bordercolor=COLORS['bg_dark'], background=COLORS['accent'],
-                        lightcolor=COLORS['accent'], darkcolor=COLORS['accent_hover'])
+        style.configure(
+            'Accent.Horizontal.TProgressbar',
+            troughcolor=COLORS['bg_dark'],
+            bordercolor=COLORS['bg_dark'],
+            background=COLORS['accent'],
+            lightcolor=COLORS['accent'],
+            darkcolor=COLORS['accent_hover']
+        )
 
         # 🔒 FOOTER
         footer = tk.Frame(self.root, bg=COLORS['bg_darker'], height=50)
@@ -406,10 +519,93 @@ class ExtractorModerno:
             fg=COLORS['text_dim'],
             bg=COLORS['bg_darker']
         ).pack(pady=15)
-        
+
         # Actualizar estado
         self.actualizar_estado_ui()
-    
+        self.root.after(150, self.iniciar_animaciones_ui)
+
+    def iniciar_animaciones_ui(self):
+        """Inicializa animaciones sutiles de la interfaz."""
+        if not hasattr(self, 'header_canvas'):
+            return
+        self.render_header_gradient(self.header_canvas)
+        self.animar_header_wave()
+
+    def render_header_gradient(self, canvas):
+        """Dibuja un gradiente en el encabezado."""
+        width = canvas.winfo_width()
+        if width <= 1:
+            self.root.after(120, lambda: self.render_header_gradient(canvas))
+            return
+
+        canvas.delete('gradient')
+        steps = 50
+        for i in range(steps):
+            ratio = i / (steps - 1)
+            color = blend_colors(COLORS['gradient_start'], COLORS['gradient_end'], ratio)
+            x1 = int(width / steps * i)
+            x2 = int(width / steps * (i + 1))
+            canvas.create_rectangle(x1, 0, x2, 120, fill=color, outline='', tags='gradient')
+
+        canvas.tag_lower('gradient')
+        canvas.tag_raise('accent_wave')
+        canvas.tag_raise('header_title')
+        canvas.tag_raise('header_subtitle')
+
+    def animar_header_wave(self):
+        """Crea una animación leve en la barra inferior del header."""
+        if not hasattr(self, 'header_canvas'):
+            return
+
+        canvas = self.header_canvas
+        width = canvas.winfo_width()
+        if width <= 1:
+            canvas.after(120, self.animar_header_wave)
+            return
+
+        self.wave_offset += 6
+        if self.wave_offset > width + 200:
+            self.wave_offset = -200
+
+        canvas.coords(self.header_wave, self.wave_offset - 120, 116, self.wave_offset, 120)
+        canvas.tag_raise('header_title')
+        canvas.tag_raise('header_subtitle')
+        canvas.after(60, self.animar_header_wave)
+
+    def estilizar_boton_flat(self, boton, base_color, hover_color, fg=COLORS['text'], padding_y=8, padding_x=16):
+        """Aplica estilo plano y animación hover a un botón estándar."""
+        boton.configure(
+            bg=base_color,
+            fg=fg,
+            activebackground=hover_color,
+            activeforeground=fg,
+            relief='flat',
+            borderwidth=0,
+            highlightthickness=0,
+            cursor='hand2'
+        )
+
+        if padding_x is not None:
+            boton.configure(padx=padding_x)
+        if padding_y is not None:
+            boton.configure(pady=padding_y)
+
+        boton.bind('<Enter>', lambda e, color=hover_color: boton.config(bg=color))
+        boton.bind('<Leave>', lambda e, color=base_color: boton.config(bg=color))
+
+    def estilizar_entry(self, entry):
+        """Aplica estilo de borde iluminado a un entry."""
+        entry.configure(
+            borderwidth=0,
+            highlightthickness=1,
+            highlightbackground=COLORS['input_border'],
+            highlightcolor=COLORS['accent'],
+            insertwidth=2
+        )
+
+        entry.bind('<FocusIn>', lambda e, widget=entry: widget.config(highlightbackground=COLORS['accent']))
+        entry.bind('<FocusOut>', lambda e, widget=entry: widget.config(highlightbackground=COLORS['input_border']))
+
     def crear_campo(self, parent, label, variable, es_password=False, link=None):
         """Crea un campo de entrada moderno"""
         # Label
@@ -451,24 +647,19 @@ class ExtractorModerno:
             show='•' if es_password else ''
         )
         entry.pack(side='left', fill='x', expand=True, ipady=10)
-        
+        self.estilizar_entry(entry)
+
         if es_password:
             # Botón toggle password
             toggle_btn = tk.Button(
                 entry_frame,
                 text="👁",
                 font=('SF Pro Text', 12),
-                bg=COLORS['bg_darker'],
-                fg=COLORS['text'],
-                activebackground=COLORS['border'],
-                activeforeground=COLORS['text'],
-                relief='flat',
-                cursor='hand2',
-                width=3,
                 command=lambda e=entry: self.toggle_password(e)
             )
             toggle_btn.pack(side='right', padx=(10, 0))
-        
+            self.estilizar_boton_flat(toggle_btn, COLORS['bg_darker'], COLORS['border'], padding_y=6, padding_x=10)
+
         # Guardar referencia
         if 'api' in label.lower():
             self.api_entry = entry
@@ -503,18 +694,19 @@ class ExtractorModerno:
                 self.btn_editar_frame,
                 text="✏️  Editar",
                 font=('SF Pro Text', 10, 'bold'),
-                bg=COLORS['warning'],
-                fg=COLORS['bg_dark'],
-                activebackground=COLORS['accent_hover'],
-                activeforeground=COLORS['bg_dark'],
-                relief='flat',
-                cursor='hand2',
-                padx=15,
-                pady=5,
                 command=self.toggle_edicion
             )
             btn_edit.pack()
-            
+            hover_color = blend_colors(COLORS['warning'], COLORS['accent'], 0.35)
+            self.estilizar_boton_flat(
+                btn_edit,
+                COLORS['warning'],
+                hover_color,
+                fg=COLORS['bg_dark'],
+                padding_y=6,
+                padding_x=18
+            )
+
             self.api_entry.config(state='disabled')
             self.pwd_entry.config(state='disabled')
             self.btn_carpeta.config(state='disabled')
@@ -626,11 +818,13 @@ class ExtractorModerno:
         
         self.log_text.delete('1.0', 'end')
         self.procesando = True
-        
+
         # Deshabilitar botón
-        self.btn_procesar.itemconfig(self.btn_procesar.rect, fill='#4a5568')
-        self.btn_procesar.itemconfig(self.btn_procesar.text_id, text='⏳ PROCESANDO...')
-        
+        self.btn_procesar.set_pulse(False)
+        self.btn_procesar.set_base_color(COLORS['button_disabled'])
+        self.btn_procesar.set_text('⏳ PROCESANDO...')
+        self.btn_procesar.set_text_color(COLORS['text'])
+
         self.progress.pack(fill='x', pady=(10, 0))
         self.progress.start(10)
         
@@ -670,8 +864,10 @@ class ExtractorModerno:
     def finalizar_procesamiento(self):
         """Finaliza procesamiento"""
         self.procesando = False
-        self.btn_procesar.itemconfig(self.btn_procesar.rect, fill=COLORS['success'])
-        self.btn_procesar.itemconfig(self.btn_procesar.text_id, text='🚀  PROCESAR EXTRACTOS')
+        self.btn_procesar.set_base_color(COLORS['success'])
+        self.btn_procesar.set_text('🚀  PROCESAR EXTRACTOS')
+        self.btn_procesar.set_text_color(COLORS['bg_dark'])
+        self.btn_procesar.set_pulse(True)
         self.progress.stop()
         self.progress.pack_forget()
     
