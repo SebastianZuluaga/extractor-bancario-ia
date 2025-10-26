@@ -294,15 +294,6 @@ class ExtractorModerno:
         btn_seguridad.pack(side='left', padx=5)
         self.estilizar_boton_flat(btn_seguridad, COLORS['bg_card'], COLORS['accent_hover'], padding_y=6, padding_x=12)
 
-        btn_logs = tk.Button(
-            header_buttons,
-            text="Logs",
-            font=('SF Pro Text', 10, 'bold'),
-            command=self.abrir_logs
-        )
-        btn_logs.pack(side='left', padx=5)
-        self.estilizar_boton_flat(btn_logs, COLORS['bg_card'], COLORS['accent_hover'], padding_y=6, padding_x=12)
-
         # Container principal con padding
         main = tk.Frame(self.root, bg=COLORS['bg_dark'])
         main.pack(fill='both', expand=True, padx=40, pady=30)
@@ -465,38 +456,6 @@ class ExtractorModerno:
         )
         self.btn_procesar.pack()
         
-        # 📋 LOG MODERNO
-        tk.Label(
-            main,
-            text="Log del Proceso",
-            font=('SF Pro Text', 13, 'bold'),
-            fg=COLORS['text'],
-            bg=COLORS['bg_dark']
-        ).pack(anchor='w', pady=(0, 10))
-        
-        log_frame = tk.Frame(
-            main,
-            bg=COLORS['bg_card'],
-            highlightthickness=1,
-            highlightbackground=COLORS['border'],
-            bd=0
-        )
-        log_frame.pack(fill='both', expand=True)
-
-        self.log_text = scrolledtext.ScrolledText(
-            log_frame,
-            font=('SF Pro Mono', 10),
-            bg=COLORS['bg_card'],
-            fg=COLORS['text'],
-            insertbackground=COLORS['accent'],
-            relief='flat',
-            wrap='word',
-            padx=15,
-            pady=15
-        )
-        self.log_text.pack(fill='both', expand=True, padx=2, pady=2)
-        self.log_text.configure(highlightthickness=1, highlightbackground=COLORS['input_border'])
-
         # Barra de progreso
         self.progress = ttk.Progressbar(main, mode='indeterminate', style='Accent.Horizontal.TProgressbar')
 
@@ -780,10 +739,7 @@ class ExtractorModerno:
             self.logger.info("Carpeta de procesamiento establecida en %s", carpeta)
 
     def log(self, mensaje):
-        """Agrega al log"""
-        self.log_text.insert('end', mensaje)
-        self.log_text.see('end')
-        self.root.update()
+        """Agrega al log (solo logger, sin UI)"""
         mensaje_linea = mensaje.strip()
         if mensaje_linea:
             self.logger.info(mensaje_linea)
@@ -820,7 +776,6 @@ class ExtractorModerno:
         if self.procesando or not self.validar_inputs():
             return
         
-        self.log_text.delete('1.0', 'end')
         self.procesando = True
 
         # Deshabilitar botón
@@ -898,16 +853,6 @@ class ExtractorModerno:
         )
         messagebox.showinfo("Seguridad", mensaje)
 
-    def abrir_logs(self):
-        try:
-            if sys.platform == 'darwin':
-                os.system(f'open "{self.log_file_path}"')
-            elif sys.platform == 'win32':
-                os.startfile(self.log_file_path)
-            else:
-                os.system(f'xdg-open "{self.log_file_path}"')
-        except Exception:
-            messagebox.showinfo("Logs", f"Archivo de logs: {self.log_file_path}")
 
     def rotar_clave(self):
         if messagebox.askyesno("Rotar clave", "¿Deseas generar una nueva clave de cifrado?" ):
