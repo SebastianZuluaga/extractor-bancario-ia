@@ -46,7 +46,7 @@ Aplicación moderna con interfaz gráfica para extraer y procesar extractos banc
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/TU_USUARIO/extractor-bancario-ia.git
+git clone https://github.com/SebastianZuluaga/extractor-bancario-ia.git
 cd extractor-bancario-ia
 ```
 
