@@ -34,8 +34,9 @@ def configurar_logger(nombre: str = DEFAULT_LOG_NAME) -> Tuple[logging.Logger, P
         The configured logger instance and the path to the log file.
     """
 
-    config_dir = Path.home() / ".extractor_bancario"
-    config_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+    # Usar carpeta del proyecto en lugar de home para evitar problemas de permisos
+    config_dir = Path(__file__).parent / "logs"
+    config_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
 
     log_path = config_dir / "extractor.log"
 
@@ -45,19 +46,24 @@ def configurar_logger(nombre: str = DEFAULT_LOG_NAME) -> Tuple[logging.Logger, P
     # Avoid attaching multiple handlers when running the UI repeatedly.
     if not any(isinstance(h, RotatingFileHandler) and getattr(h, "baseFilename", None) == str(log_path)
                for h in logger.handlers):
-        handler = RotatingFileHandler(
-            log_path,
-            maxBytes=_MAX_BYTES,
-            backupCount=_BACKUP_COUNT,
-            encoding="utf-8",
-        )
-        formatter = logging.Formatter(
-            fmt="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        )
-        handler.setFormatter(formatter)
-        handler.setLevel(logging.INFO)
-        logger.addHandler(handler)
+        try:
+            handler = RotatingFileHandler(
+                log_path,
+                maxBytes=_MAX_BYTES,
+                backupCount=_BACKUP_COUNT,
+                encoding="utf-8",
+            )
+            formatter = logging.Formatter(
+                fmt="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
+            )
+            handler.setFormatter(formatter)
+            handler.setLevel(logging.INFO)
+            logger.addHandler(handler)
+        except (PermissionError, OSError) as e:
+            # Si no se puede crear el archivo de log, solo usar consola
+            print(f"⚠️ No se pudo crear archivo de log: {e}")
+            pass
 
     # Ensure at least console output when running via CLI (useful during
     # development).  We do not attach a console handler if one is already

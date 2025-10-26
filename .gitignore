@@ -53,6 +53,7 @@ Thumbs.db
 .settings/
 
 # 📝 Logs y temporales
+logs/
 *.log
 *.tmp
 *.temp
