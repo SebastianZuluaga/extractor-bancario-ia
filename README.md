@@ -26,10 +26,10 @@ Aplicación moderna con interfaz gráfica para extraer y procesar extractos banc
 - ✅ Estructura datos automáticamente
 
 ### 🔐 **Seguridad**
-- ✅ **Encriptación AES-256**
-- ✅ Credenciales guardadas localmente
-- ✅ Permisos 600 (solo tu usuario)
-- ✅ Clave única por equipo
+- ✅ **Cifrado AES-256** con rotación de claves
+- ✅ Uso automático del llavero del sistema (macOS/Windows/Linux compatibles)
+- ✅ Permisos reforzados en disco (700/600)
+- ✅ Log seguro con rotación y acceso rápido desde la interfaz
 - ✅ No sale de tu computadora
 
 ### 📊 **Procesamiento**
@@ -149,15 +149,17 @@ extractor-bancario-ia/
 
 ```
 ~/.extractor_bancario/
-├── config.enc  ← Configuración encriptada (AES-256)
-└── key.key     ← Clave de encriptación (permisos 600)
+├── config.enc   ← Configuración cifrada (AES-256)
+├── key.key      ← Solo si el llavero del sistema no está disponible
+└── extractor.log← Historial de actividad con rotación automática
 ```
 
 ### **¿Es seguro?**
 
-- ✅ **Encriptación nivel bancario** (AES-256)
-- ✅ **Solo tu usuario** puede leer los archivos
-- ✅ **Clave única** derivada de tu usuario macOS
+- ✅ **Cifrado nivel bancario** (AES-256) con rotación desde la UI
+- ✅ **Llavero del sistema** como almacén primario cuando existe
+- ✅ **Permisos estrictos** en archivos sensibles (solo tu usuario)
+- ✅ **Logs auditables** sin exponer credenciales
 - ✅ **100% local** (no se envía a internet)
 - ✅ **No reversible** sin tu usuario
 

@@ -1,15 +1,14 @@
-"""
-🌙 Extractor de Extractos Bancarios - UI Moderna Dark Mode
-Diseño minimalista y moderno con tema oscuro
-"""
+"""Interfaz moderna y reforzada para el extractor bancario."""
 
-import tkinter as tk
-from tkinter import ttk, filedialog, messagebox, scrolledtext
-import threading
-from pathlib import Path
 import os
 import sys
+import threading
+import tkinter as tk
+from pathlib import Path
+from tkinter import filedialog, messagebox, scrolledtext, ttk
+
 from config_segura import ConfigSegura
+from logging_utils import configurar_logger
 
 
 # 🎨 Paleta de colores moderna
@@ -95,6 +94,9 @@ class ModernButton(tk.Canvas):
             self.command()
 
 
+logger, LOG_PATH = configurar_logger("app.ui")
+
+
 class ExtractorModerno:
     def __init__(self, root):
         self.root = root
@@ -114,7 +116,10 @@ class ExtractorModerno:
         
         # Configuración segura
         self.config_segura = ConfigSegura()
-        
+        self.logger = logger
+        self.log_file_path = LOG_PATH
+        self.secure_dir = Path(self.config_segura.get_ubicacion())
+
         # Variables
         self.api_key = tk.StringVar()
         self.password = tk.StringVar()
@@ -131,7 +136,9 @@ class ExtractorModerno:
         # Atajos de teclado
         self.root.bind_all("<Command-v>", self.pegar)
         self.root.bind_all("<Control-v>", self.pegar)
-        
+
+        self.logger.info("Aplicación inicializada")
+
     def pegar(self, event=None):
         """Maneja pegado desde portapapeles"""
         try:
@@ -169,11 +176,43 @@ class ExtractorModerno:
                           fill=COLORS['text'])
         
         # Subtítulo
-        header.create_text(450, 85, 
-                          text="Procesa tus extractos con Inteligencia Artificial", 
+        header.create_text(450, 85,
+                          text="Procesa tus extractos con Inteligencia Artificial",
                           font=('SF Pro Text', 13),
                           fill=COLORS['text_dim'])
-        
+
+        # Botones de acción del header
+        header_buttons = tk.Frame(header, bg=COLORS['bg_darker'])
+        header.create_window(820, 60, window=header_buttons)
+
+        btn_seguridad = tk.Button(
+            header_buttons,
+            text="🔒 Seguridad",
+            font=('SF Pro Text', 10, 'bold'),
+            bg=COLORS['bg_card'],
+            fg=COLORS['text'],
+            activebackground=COLORS['accent_hover'],
+            activeforeground=COLORS['bg_dark'],
+            relief='flat',
+            cursor='hand2',
+            command=self.mostrar_info_seguridad
+        )
+        btn_seguridad.pack(side='left', padx=5)
+
+        btn_logs = tk.Button(
+            header_buttons,
+            text="📁 Logs",
+            font=('SF Pro Text', 10, 'bold'),
+            bg=COLORS['bg_card'],
+            fg=COLORS['text'],
+            activebackground=COLORS['accent_hover'],
+            activeforeground=COLORS['bg_dark'],
+            relief='flat',
+            cursor='hand2',
+            command=self.abrir_logs
+        )
+        btn_logs.pack(side='left', padx=5)
+
         # Container principal con padding
         main = tk.Frame(self.root, bg=COLORS['bg_dark'])
         main.pack(fill='both', expand=True, padx=40, pady=30)
@@ -197,7 +236,16 @@ class ExtractorModerno:
             bg=COLORS['bg_card']
         )
         self.label_estado.pack(side='left')
-        
+
+        self.badge_seguridad = tk.Label(
+            estado_frame,
+            text=f"🔐 Directorio seguro: {self.secure_dir}",
+            font=('SF Pro Text', 9),
+            fg=COLORS['text_dim'],
+            bg=COLORS['bg_card']
+        )
+        self.badge_seguridad.pack(side='left', padx=(10, 0))
+
         # Botón editar moderno
         self.btn_editar_frame = tk.Frame(estado_frame, bg=COLORS['bg_card'])
         self.btn_editar_frame.pack(side='right')
@@ -265,7 +313,38 @@ class ExtractorModerno:
             pady=12,
             command=self.guardar_configuracion
         )
-        
+
+        acciones_frame = tk.Frame(config_inner, bg=COLORS['bg_card'])
+        acciones_frame.pack(fill='x', pady=(15, 0))
+
+        self.btn_rotar_clave = tk.Button(
+            acciones_frame,
+            text="🔁 Rotar clave de cifrado",
+            font=('SF Pro Text', 10, 'bold'),
+            bg=COLORS['bg_darker'],
+            fg=COLORS['text'],
+            activebackground=COLORS['accent_hover'],
+            activeforeground=COLORS['bg_dark'],
+            relief='flat',
+            cursor='hand2',
+            command=self.rotar_clave
+        )
+        self.btn_rotar_clave.pack(side='left')
+
+        self.btn_borrar_config = tk.Button(
+            acciones_frame,
+            text="🧹 Borrar configuración",
+            font=('SF Pro Text', 10, 'bold'),
+            bg=COLORS['bg_darker'],
+            fg=COLORS['text'],
+            activebackground=COLORS['accent_hover'],
+            activeforeground=COLORS['bg_dark'],
+            relief='flat',
+            cursor='hand2',
+            command=self.eliminar_configuracion
+        )
+        self.btn_borrar_config.pack(side='left', padx=(10, 0))
+
         # 🚀 BOTÓN PRINCIPAL GRANDE
         btn_container = tk.Frame(main, bg=COLORS['bg_dark'])
         btn_container.pack(fill='x', pady=(0, 20))
@@ -292,7 +371,7 @@ class ExtractorModerno:
         
         log_frame = tk.Frame(main, bg=COLORS['input_border'])
         log_frame.pack(fill='both', expand=True)
-        
+
         self.log_text = scrolledtext.ScrolledText(
             log_frame,
             font=('SF Pro Mono', 10),
@@ -308,7 +387,14 @@ class ExtractorModerno:
         
         # Barra de progreso
         self.progress = ttk.Progressbar(main, mode='indeterminate')
-        
+
+        # Configurar estilo de progreso para un look más moderno
+        style = ttk.Style()
+        style.theme_use('clam')
+        style.configure('TProgressbar', troughcolor=COLORS['bg_dark'],
+                        bordercolor=COLORS['bg_dark'], background=COLORS['accent'],
+                        lightcolor=COLORS['accent'], darkcolor=COLORS['accent_hover'])
+
         # 🔒 FOOTER
         footer = tk.Frame(self.root, bg=COLORS['bg_darker'], height=50)
         footer.pack(fill='x', side='bottom')
@@ -433,18 +519,22 @@ class ExtractorModerno:
             self.pwd_entry.config(state='disabled')
             self.btn_carpeta.config(state='disabled')
             self.btn_guardar_config.pack_forget()
+            self.btn_rotar_clave.config(state='normal')
+            self.btn_borrar_config.config(state='normal')
         else:
             # Modo edición
             self.label_estado.config(
                 text="⚠️  Configura y guarda tus credenciales",
                 fg=COLORS['warning']
             )
-            
+
             self.api_entry.config(state='normal')
             self.pwd_entry.config(state='normal')
             self.btn_carpeta.config(state='normal')
             self.btn_guardar_config.pack(fill='x', pady=(20, 0))
-    
+            self.btn_rotar_clave.config(state='disabled')
+            self.btn_borrar_config.config(state='disabled')
+
     def toggle_edicion(self):
         """Toggle modo edición"""
         self.modo_edicion.set(not self.modo_edicion.get())
@@ -476,10 +566,12 @@ class ExtractorModerno:
             self.modo_edicion.set(False)
             self.actualizar_estado_ui()
             self.log("✅ Configuración guardada\n")
-            
+            self.logger.info("Configuración protegida actualizada")
+
         except Exception as e:
             messagebox.showerror("Error", f"Error al guardar:\n{str(e)}")
-    
+            self.logger.exception("Error al guardar la configuración")
+
     def seleccionar_carpeta(self):
         """Selecciona carpeta"""
         carpeta = filedialog.askdirectory(
@@ -489,17 +581,24 @@ class ExtractorModerno:
         if carpeta:
             self.carpeta.set(carpeta)
             self.log(f"📁 Carpeta: {carpeta}\n")
-    
+            self.logger.info("Carpeta de procesamiento establecida en %s", carpeta)
+
     def log(self, mensaje):
         """Agrega al log"""
         self.log_text.insert('end', mensaje)
         self.log_text.see('end')
         self.root.update()
+        mensaje_linea = mensaje.strip()
+        if mensaje_linea:
+            self.logger.info(mensaje_linea)
     
     def validar_inputs(self):
         """Valida inputs"""
         if not self.api_key.get():
             messagebox.showerror("Error", "Falta API Key")
+            return False
+        if len(self.api_key.get().strip()) < 20:
+            messagebox.showerror("Error", "La API Key parece inválida")
             return False
         if not self.password.get():
             messagebox.showerror("Error", "Falta contraseña")
@@ -537,7 +636,7 @@ class ExtractorModerno:
         
         thread = threading.Thread(target=self.procesar_pdfs, daemon=True)
         thread.start()
-    
+
     def procesar_pdfs(self):
         """Procesa PDFs"""
         try:
@@ -560,13 +659,14 @@ class ExtractorModerno:
                 self.root.after(0, lambda: self.preguntar_abrir(excel_path))
             else:
                 self.log("\n❌ Error al generar Excel\n")
-                
+
         except Exception as e:
             self.log(f"\n❌ Error: {str(e)}\n")
-        
+            self.logger.exception("Error inesperado durante el procesamiento")
+
         finally:
             self.root.after(0, self.finalizar_procesamiento)
-    
+
     def finalizar_procesamiento(self):
         """Finaliza procesamiento"""
         self.procesando = False
@@ -587,6 +687,44 @@ class ExtractorModerno:
                     os.system(f'xdg-open "{excel_path}"')
             except:
                 pass
+
+    def mostrar_info_seguridad(self):
+        mensaje = (
+            "Tus credenciales se cifran con AES-256 usando llaves únicas por "
+            "equipo. Cuando es posible se almacena la clave maestra en el "
+            "llavero del sistema; de lo contrario se protege con permisos 600 "
+            "dentro de la carpeta segura. Puedes rotar la clave o eliminar los "
+            "datos desde el panel de configuración."
+        )
+        messagebox.showinfo("Seguridad", mensaje)
+
+    def abrir_logs(self):
+        try:
+            if sys.platform == 'darwin':
+                os.system(f'open "{self.log_file_path}"')
+            elif sys.platform == 'win32':
+                os.startfile(self.log_file_path)
+            else:
+                os.system(f'xdg-open "{self.log_file_path}"')
+        except Exception:
+            messagebox.showinfo("Logs", f"Archivo de logs: {self.log_file_path}")
+
+    def rotar_clave(self):
+        if messagebox.askyesno("Rotar clave", "¿Deseas generar una nueva clave de cifrado?" ):
+            self.config_segura.rotar_clave()
+            self.log("🔁 Clave de cifrado rotada\n")
+            self.logger.info("El usuario rotó la clave de cifrado")
+
+    def eliminar_configuracion(self):
+        if messagebox.askyesno("Eliminar configuración", "¿Eliminar configuración cifrada? Esta acción no se puede deshacer."):
+            self.config_segura.eliminar()
+            self.api_key.set("")
+            self.password.set("")
+            self.carpeta.set("")
+            self.modo_edicion.set(True)
+            self.actualizar_estado_ui()
+            self.log("🧹 Configuración eliminada\n")
+            self.logger.warning("Configuración cifrada eliminada por el usuario")
 
 
 def main():

@@ -8,4 +8,5 @@ camelot-py[cv]>=0.11.0
 google-generativeai>=0.8.0
 pymupdf>=1.26.0
 cryptography>=46.0.0
+keyring>=24.3.0
 
