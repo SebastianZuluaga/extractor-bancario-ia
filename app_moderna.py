@@ -178,9 +178,9 @@ class ExtractorModerno:
         self.root = root
         self.root.title("Extractor de Extractos Bancarios")
         
-        # Configurar ventana
+        # Configurar ventana (más alta para evitar scroll)
         window_width = 900
-        window_height = 750
+        window_height = 900
         screen_width = root.winfo_screenwidth()
         screen_height = root.winfo_screenheight()
         x = (screen_width - window_width) // 2
@@ -265,7 +265,7 @@ class ExtractorModerno:
         self.header_canvas.create_text(
             450,
             45,
-            text="🤖 Extractor Bancario IA",
+            text="Extractor Bancario IA",
             font=('SF Pro Display', 32, 'bold'),
             fill=COLORS['text'],
             tags='header_title'
@@ -287,7 +287,7 @@ class ExtractorModerno:
 
         btn_seguridad = tk.Button(
             header_buttons,
-            text="🔒 Seguridad",
+            text="Seguridad",
             font=('SF Pro Text', 10, 'bold'),
             command=self.mostrar_info_seguridad
         )
@@ -296,7 +296,7 @@ class ExtractorModerno:
 
         btn_logs = tk.Button(
             header_buttons,
-            text="📁 Logs",
+            text="Logs",
             font=('SF Pro Text', 10, 'bold'),
             command=self.abrir_logs
         )
@@ -336,7 +336,7 @@ class ExtractorModerno:
 
         self.badge_seguridad = tk.Label(
             estado_frame,
-            text=f"🔐 Directorio seguro: {self.secure_dir}",
+            text=f"Directorio seguro: {self.secure_dir}",
             font=('SF Pro Text', 9),
             fg=COLORS['accent'],
             bg=COLORS['bg_card']
@@ -348,17 +348,17 @@ class ExtractorModerno:
         self.btn_editar_frame.pack(side='right')
         
         # API Key
-        self.crear_campo(config_inner, "🔑  API Key de Gemini", self.api_key, 
+        self.crear_campo(config_inner, "API Key de Gemini", self.api_key, 
                         es_password=True, link="makersuite.google.com/app/apikey")
         
         # Password
-        self.crear_campo(config_inner, "🔐  Contraseña de PDFs", self.password, 
+        self.crear_campo(config_inner, "Contraseña de PDFs", self.password, 
                         es_password=True)
         
         # Carpeta
         tk.Label(
             config_inner,
-            text="📁  Carpeta con PDFs",
+            text="Carpeta con PDFs",
             font=('SF Pro Text', 12, 'bold'),
             fg=COLORS['text'],
             bg=COLORS['bg_card']
@@ -402,7 +402,7 @@ class ExtractorModerno:
         # Botón guardar config
         self.btn_guardar_config = tk.Button(
             config_inner,
-            text="💾  Guardar Configuración",
+            text="Guardar Configuración",
             font=('SF Pro Text', 12, 'bold'),
             command=self.guardar_configuracion
         )
@@ -420,7 +420,7 @@ class ExtractorModerno:
 
         self.btn_rotar_clave = tk.Button(
             acciones_frame,
-            text="🔁 Rotar clave de cifrado",
+            text="Rotar clave de cifrado",
             font=('SF Pro Text', 10, 'bold'),
             command=self.rotar_clave
         )
@@ -436,7 +436,7 @@ class ExtractorModerno:
 
         self.btn_borrar_config = tk.Button(
             acciones_frame,
-            text="🧹 Borrar configuración",
+            text="Borrar configuración",
             font=('SF Pro Text', 10, 'bold'),
             command=self.eliminar_configuracion
         )
@@ -456,7 +456,7 @@ class ExtractorModerno:
         
         self.btn_procesar = ModernButton(
             btn_container,
-            text="🚀  PROCESAR EXTRACTOS",
+            text="PROCESAR EXTRACTOS",
             command=self.iniciar_procesamiento,
             bg_color=COLORS['success'],
             fg_color=COLORS['bg_dark'],
@@ -468,7 +468,7 @@ class ExtractorModerno:
         # 📋 LOG MODERNO
         tk.Label(
             main,
-            text="📋  Log del Proceso",
+            text="Log del Proceso",
             font=('SF Pro Text', 13, 'bold'),
             fg=COLORS['text'],
             bg=COLORS['bg_dark']
@@ -486,7 +486,7 @@ class ExtractorModerno:
         self.log_text = scrolledtext.ScrolledText(
             log_frame,
             font=('SF Pro Mono', 10),
-            bg=COLORS['input_bg'],
+            bg=COLORS['bg_card'],
             fg=COLORS['text'],
             insertbackground=COLORS['accent'],
             relief='flat',
@@ -518,7 +518,7 @@ class ExtractorModerno:
         
         tk.Label(
             footer,
-            text="💡 Gemini 2.0 Flash • Encriptación AES-256 • 100% Gratuito",
+            text="Gemini 2.0 Flash • Encriptación AES-256 • 100% Gratuito",
             font=('SF Pro Text', 9),
             fg=COLORS['text_dim'],
             bg=COLORS['bg_darker']
@@ -657,12 +657,12 @@ class ExtractorModerno:
             # Botón toggle password
             toggle_btn = tk.Button(
                 entry_frame,
-                text="👁",
+                text="Ver",
                 font=('SF Pro Text', 12),
                 command=lambda e=entry: self.toggle_password(e)
             )
             toggle_btn.pack(side='right', padx=(10, 0))
-            self.estilizar_boton_flat(toggle_btn, COLORS['bg_darker'], COLORS['border'], padding_y=6, padding_x=10)
+            self.estilizar_boton_flat(toggle_btn, COLORS['button_secondary'], COLORS['button_secondary_hover'], padding_y=6, padding_x=10)
 
         # Guardar referencia
         if 'api' in label.lower():
@@ -689,14 +689,14 @@ class ExtractorModerno:
         if tiene_config and not en_edicion:
             # Modo lectura
             self.label_estado.config(
-                text="✅  Configuración guardada de forma segura",
+                text="Configuración guardada de forma segura",
                 fg=COLORS['success']
             )
             
             # Botón editar
             btn_edit = tk.Button(
                 self.btn_editar_frame,
-                text="✏️  Editar",
+                text="Editar",
                 font=('SF Pro Text', 10, 'bold'),
                 command=self.toggle_edicion
             )
@@ -720,7 +720,7 @@ class ExtractorModerno:
         else:
             # Modo edición
             self.label_estado.config(
-                text="⚠️  Configura y guarda tus credenciales",
+                text="Configura y guarda tus credenciales",
                 fg=COLORS['warning']
             )
 
@@ -869,7 +869,7 @@ class ExtractorModerno:
         """Finaliza procesamiento"""
         self.procesando = False
         self.btn_procesar.set_base_color(COLORS['success'])
-        self.btn_procesar.set_text('🚀  PROCESAR EXTRACTOS')
+        self.btn_procesar.set_text('PROCESAR EXTRACTOS')
         self.btn_procesar.set_text_color(COLORS['bg_dark'])
         self.btn_procesar.set_pulse(True)
         self.progress.stop()
