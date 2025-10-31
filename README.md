@@ -301,4 +301,4 @@ MIT License - Libre para uso personal y comercial
 
 ---
 
-**Hecho con ❤️ usando Python 3.13 y Gemini AI**
+**Hecho con Cursor usando Python 3.13 y Gemini AI**
