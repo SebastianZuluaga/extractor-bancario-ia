@@ -785,7 +785,14 @@ class ExtractorModerno:
         self.btn_procesar.set_text_color(COLORS['text'])
 
         self.progress.pack(fill='x', pady=(10, 0))
-        self.progress.start(10)
+        # Configurar progreso determinado
+        try:
+            self.progress.config(mode='determinate', maximum=100)
+            self.progress['value'] = 0
+        except Exception:
+            # Fallback a indeterminado si no está disponible
+            self.progress.config(mode='indeterminate')
+            self.progress.start(10)
         
         thread = threading.Thread(target=self.procesar_pdfs, daemon=True)
         thread.start()
@@ -795,11 +802,19 @@ class ExtractorModerno:
         try:
             from procesador_gemini import ProcesadorGemini
             
+            # Callback seguro para UI principal
+            def cb_progreso(porcentaje, mensaje=None):
+                try:
+                    self.root.after(0, lambda: self.actualizar_progreso(porcentaje, mensaje))
+                except Exception:
+                    pass
+            
             procesador = ProcesadorGemini(
                 api_key=self.api_key.get(),
                 password=self.password.get(),
                 carpeta=self.carpeta.get(),
-                log_callback=self.log
+                log_callback=self.log,
+                progress_callback=cb_progreso,
             )
             
             excel_path = procesador.procesar()
@@ -827,7 +842,10 @@ class ExtractorModerno:
         self.btn_procesar.set_text('PROCESAR EXTRACTOS')
         self.btn_procesar.set_text_color(COLORS['bg_dark'])
         self.btn_procesar.set_pulse(True)
-        self.progress.stop()
+        try:
+            self.progress.stop()
+        except Exception:
+            pass
         self.progress.pack_forget()
     
     def preguntar_abrir(self, excel_path):
@@ -870,6 +888,16 @@ class ExtractorModerno:
             self.actualizar_estado_ui()
             self.log("🧹 Configuración eliminada\n")
             self.logger.warning("Configuración cifrada eliminada por el usuario")
+
+    def actualizar_progreso(self, porcentaje, mensaje=None):
+        """Actualiza la barra de progreso de forma determinada (0-100)."""
+        try:
+            self.progress.config(mode='determinate', maximum=100)
+            valor = max(0.0, min(100.0, float(porcentaje)))
+            self.progress['value'] = valor
+        except Exception:
+            # Si falla, no interrumpir la UI
+            pass
 
 
 def main():
