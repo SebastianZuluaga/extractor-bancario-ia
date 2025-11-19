@@ -21,8 +21,9 @@ cd "$(dirname "$0")"
 # Activar entorno virtual
 source venv/bin/activate
 
-# Ejecutar app moderna
-python3 app_moderna.py
+echo "🚀 Iniciando Extractor Bancario Web..."
+echo "🌐 Abre http://localhost:8000 en tu navegador"
+uvicorn app.main:app --reload --port 8000
 
 echo ""
 echo "✅ Aplicación cerrada"
