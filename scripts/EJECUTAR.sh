@@ -16,9 +16,7 @@ echo ""
 echo "🔄 Iniciando aplicación..."
 echo ""
 
-cd "$(dirname "$0")"
-
-# Activar entorno virtual
+cd "$(dirname "$0")/.."
 source venv/bin/activate
 
 echo "🚀 Iniciando Extractor Bancario Web..."
