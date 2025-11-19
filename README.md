@@ -1,6 +1,6 @@
 # 🤖 Extractor de Extractos Bancarios con IA
 
-Aplicación moderna con interfaz gráfica para extraer y procesar extractos bancarios PDF usando **Inteligencia Artificial (Gemini 2.0 Flash)**.
+Aplicación web moderna para extraer, procesar y visualizar extractos bancarios PDF usando **Inteligencia Artificial (Gemini 2.0 Flash)**.
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![Gemini](https://img.shields.io/badge/Gemini-2.0%20Flash-cyan)
@@ -11,33 +11,28 @@ Aplicación moderna con interfaz gráfica para extraer y procesar extractos banc
 
 ## ✨ Características
 
-### 🎨 **Interfaz Moderna**
-- ✅ Diseño **Dark Mode** minimalista
-- ✅ Colores modernos (Cyan + Verde neón)
-- ✅ Efectos hover y animaciones
-- ✅ Tipografía SF Pro (macOS style)
-- ✅ Responsive y centrada
+### 🎨 **Nueva Interfaz Web (Desktop First)**
+- ✅ **Dashboard Completo**: Visualiza balance, ingresos, gastos y metas en una sola pantalla.
+- ✅ **Diseño Neon Dark**: Estética moderna y profesional.
+- ✅ **Gráficos Interactivos**: Doughnut charts para desglose de gastos (Chart.js).
+- ✅ **Metas Dinámicas**: Crea y sigue tus propios objetivos de ahorro.
+- ✅ **Sidebar Navigation**: Navegación fluida entre Dashboard, Carga de Datos y Metas.
 
-### 🤖 **Inteligencia Artificial**
-- ✅ **Gemini 2.0 Flash** (100% Gratuito)
-- ✅ Procesamiento página por página
-- ✅ Extracción inteligente de tablas
-- ✅ Ignora publicidad y encabezados
-- ✅ Estructura datos automáticamente
+### 🤖 **Inteligencia Artificial Avanzada**
+- ✅ **Gemini 2.0 Flash**: Análisis rápido y preciso.
+- ✅ **Analista Financiero**: Recibe consejos accionables y detección de "gastos hormiga".
+- ✅ **Procesamiento Paralelo**: Carga múltiples PDFs y procésalos simultáneamente.
+- ✅ **Clasificación Inteligente**: Categorización automática de transacciones.
 
-### 🔐 **Seguridad**
-- ✅ **Cifrado AES-256** con rotación de claves
-- ✅ Uso automático del llavero del sistema (macOS/Windows/Linux compatibles)
-- ✅ Permisos reforzados en disco (700/600)
-- ✅ Log seguro con rotación y acceso rápido desde la interfaz
-- ✅ No sale de tu computadora
+### 🔐 **Seguridad y Privacidad**
+- ✅ **Procesamiento Local**: Tu data se procesa en memoria y se guarda localmente.
+- ✅ **API Key Segura**: Tu llave de Gemini se guarda en tu navegador (localStorage).
+- ✅ **Sin Base de Datos Externa**: Todo queda en tu máquina.
 
-### 📊 **Procesamiento**
-- ✅ **3 bancos soportados**: Nu, Rappi/Davivienda, Bancolombia
-- ✅ PDFs protegidos con contraseña
-- ✅ Valores convertidos a números
-- ✅ Excel con múltiples hojas
-- ✅ Total: **278 transacciones** extraídas
+### 📊 **Soporte Multi-Banco**
+- ✅ **Bancos Soportados**: Nu, Rappi/Davivienda, Bancolombia.
+- ✅ **PDFs Encriptados**: Soporte para archivos con contraseña.
+- ✅ **Excel Consolidado**: Genera un reporte detallado en Excel.
 
 ---
 
@@ -68,112 +63,28 @@ pip install -r requirements.txt
 ### 4. Obtener API Key de Gemini (GRATIS)
 
 1. Ve a: https://makersuite.google.com/app/apikey
-2. Inicia sesión con Google
-3. Click en "Create API Key"
-4. Copia la clave
-
-### 5. Dar permisos de ejecución (macOS/Linux)
-
-```bash
-chmod +x EJECUTAR.sh
-```
+2. Crea una clave gratuita.
 
 ---
 
 ## 💻 Uso
 
-### Opción 1: Script ejecutable
+### 1. Iniciar la Aplicación
 
 ```bash
-./EJECUTAR.sh
+uvicorn app.main:app --reload
 ```
 
-### Opción 2: Comando directo
+### 2. Abrir en el Navegador
 
-```bash
-source venv/bin/activate
-python3 app_moderna.py
-```
+Ve a: [http://localhost:8000](http://localhost:8000)
 
-### Opción 3: API HTTP con Docker (recomendada para compartir)
+### 3. Flujo de Trabajo
 
-Requiere Docker instalado.
-
-```bash
-# Construir imagen
-docker build -t extractor-ia .
-
-# Ejecutar (la API queda en http://localhost:8000)
-docker run --rm -p 8000:8000 \
-  -e GEMINI_API_KEY="tu_api_key" \
-  extractor-ia
-
-# Probar salud
-curl http://localhost:8000/salud
-
-# Procesar PDFs (múltiples -F files=@...)
-curl -X POST "http://localhost:8000/procesar" \
-  -F "files=@/ruta/a/tu1.pdf" \
-  -F "files=@/ruta/a/tu2.pdf" \
-  -F "password=CONTRASEÑA_O_VACIO" \
-  --output Extractos_Consolidados.xlsx
-```
-
-Notas:
-- Puedes definir `GEMINI_API_KEY` como variable de entorno para no enviarla en el request.
-- El nombre del archivo de salida incluye timestamp para evitar sobrescritura.
-
-### Opción 4: Doble click
-
-Hacer doble click en `EJECUTAR.sh` desde Finder
-
----
-
-## 📖 Guía de Uso
-
-### **Primera Vez:**
-
-1. Ejecutar la aplicación
-2. Ingresar API Key de Gemini
-3. Ingresar contraseña de PDFs
-4. Seleccionar carpeta con PDFs
-5. Click en **"💾 Guardar Configuración"**
-6. Click en **"🚀 PROCESAR EXTRACTOS"**
-
-### **Próximas Veces:**
-
-1. Ejecutar la aplicación (configuración ya cargada)
-2. Click en **"🚀 PROCESAR EXTRACTOS"**
-3. ¡Listo!
-
-### Opción 5: API con Docker Compose
-
-```bash
-# 1) Crear archivo .env (no se sube al repo)
-echo "GEMINI_API_KEY=TU_API_KEY" > .env
-
-# 2) Levantar la API
-docker compose up -d --build
-
-# 3) Probar salud
-curl http://localhost:8000/salud
-
-# 4) Procesar PDFs
-curl -X POST "http://localhost:8000/procesar" \
-  -F "files=@/ruta/a/tu1.pdf" \
-  -F "files=@/ruta/a/tu2.pdf" \
-  -F "password=CONTRASEÑA_O_VACIO" \
-  --output Extractos_Consolidados.xlsx
-
-# 5) Apagar
-docker compose down
-```
-
-### **Editar Configuración:**
-
-1. Click en **"✏️ Editar"**
-2. Modificar campos necesarios
-3. Click en **"💾 Guardar Configuración"**
+1.  **Cargar Datos**: Arrastra tus PDFs al área de carga.
+2.  **Credenciales**: Ingresa tu Gemini API Key (se guarda para la próxima) y la contraseña del PDF si la tiene.
+3.  **Procesar**: Click en "Process Statements".
+4.  **Analizar**: Revisa el Dashboard con tus gráficas, balance y recomendaciones de IA.
 
 ---
 
@@ -181,175 +92,33 @@ docker compose down
 
 ```
 extractor-bancario-ia/
-├── 🌙 app_moderna.py              # UI Moderna (Archivo principal)
-├── 🔐 config_segura.py            # Módulo de encriptación
-├── 🤖 procesador_gemini.py        # Procesador con IA
-├── 📋 requirements.txt            # Dependencias Python
-├── 🚀 EJECUTAR.sh                 # Script de ejecución
-├── 📄 README.md                   # Esta guía
-└── .gitignore                     # Archivos excluidos de Git
-```
-
-**Nota:** Los PDFs de usuario y Excel generados están excluidos de Git por seguridad (.gitignore).
-
----
-
-## 🔒 Seguridad
-
-### **¿Dónde se guardan las credenciales?**
-
-```
-~/.extractor_bancario/
-├── config.enc   ← Configuración cifrada (AES-256)
-├── key.key      ← Solo si el llavero del sistema no está disponible
-└── extractor.log← Historial de actividad con rotación automática
-```
-
-### **¿Es seguro?**
-
-- ✅ **Cifrado nivel bancario** (AES-256) con rotación desde la UI
-- ✅ **Llavero del sistema** como almacén primario cuando existe
-- ✅ **Permisos estrictos** en archivos sensibles (solo tu usuario)
-- ✅ **Logs auditables** sin exponer credenciales
-- ✅ **100% local** (no se envía a internet)
-- ✅ **No reversible** sin tu usuario
-
----
-
-## 📊 Excel Generado
-
-### **Formato de Salida:**
-
-```
-Extractos_Consolidados.xlsx
-├── Hoja 1: Nu_2025-11-03 (39 transacciones)
-│   ├── fecha
-│   ├── descripcion
-│   ├── valor (número)
-│   ├── cuotas
-│   ├── valor_del_mes (número)
-│   ├── interes_mes (número)
-│   ├── total_pagar (número)
-│   └── restante (número)
-│
-├── Hoja 2: Rappi/Davivienda (31 transacciones)
-│   ├── tarjeta
-│   ├── fecha
-│   ├── descripcion
-│   ├── valor_transaccion (número)
-│   ├── capital_facturado (número)
-│   ├── cuotas
-│   ├── capital_pendiente (número)
-│   ├── tasa_mv (número)
-│   └── tasa_ea (número)
-│
-└── Hoja 3: Bancolombia (208 transacciones)
-    ├── fecha
-    ├── descripcion
-    ├── sucursal
-    ├── dcto
-    ├── valor (número)
-    └── saldo (número)
-```
-
-### **Valores Numéricos:**
-
-Todos los valores monetarios están convertidos a **números** (float64) para que puedas:
-- ✅ Sumar directamente en Excel
-- ✅ Crear gráficos
-- ✅ Aplicar fórmulas
-- ✅ Análisis de datos
-
----
-
-## 🛠️ Dependencias
-
-```
-pandas >= 2.2.0          # Manejo de datos
-openpyxl >= 3.1.2        # Excel
-pikepdf >= 9.0.0         # Desbloqueo PDFs
-pymupdf >= 1.26.0        # Conversión PDF → Imagen
-google-generativeai      # Gemini AI
-cryptography >= 46.0.0   # Encriptación
-Pillow >= 10.1.0         # Procesamiento imágenes
+├── app/
+│   ├── main.py              # Backend FastAPI
+│   ├── core/                # Configuración y Logs
+│   ├── services/            # Lógica de IA (Gemini)
+│   └── static/              # Frontend (HTML, CSS, JS)
+├── data/                    # Carpeta para PDFs y Excel (ignorada por git)
+├── scripts/                 # Scripts de utilidad
+├── requirements.txt         # Dependencias
+└── README.md                # Documentación
 ```
 
 ---
 
-## 🎯 Atajos de Teclado
+## 🛠️ Tecnologías
 
-- **Cmd+V** (macOS) / **Ctrl+V** (Windows): Pegar en campos
-- **Enter**: Ejecutar acción del botón enfocado
-- **Tab**: Navegar entre campos
-
----
-
-## 🔄 Próximas Funcionalidades
-
-- [ ] 📊 Análisis automático de gastos
-- [ ] 💰 Integración con Excel de sueldos
-- [ ] 🧾 Cálculo de impuestos
-- [ ] 📈 Comparación ingresos vs gastos
-- [ ] 📅 Reportes mensuales/anuales
-- [ ] 🎯 Categorización automática
-- [ ] 💾 Exportar a otros formatos
-
----
-
-## ❓ Preguntas Frecuentes
-
-### **¿Es realmente gratis?**
-✅ Sí, 100%. Gemini 2.0 Flash tiene un tier gratuito generoso (15 requests/min, 1,500/día).
-
-### **¿Necesito internet?**
-✅ Solo para procesar con Gemini. La configuración es local y offline.
-
-### **¿Mis datos salen de mi computadora?**
-⚠️ Solo los PDFs se envían a Gemini para procesamiento. Las credenciales NUNCA salen.
-
-### **¿Puedo usar en Windows/Linux?**
-✅ Sí, el código es multiplataforma. Solo cambia `EJECUTAR.sh` por `EJECUTAR.bat` (Windows).
-
-### **¿Qué pasa si cambio de computadora?**
-⚠️ Deberás ingresar la configuración nuevamente (está encriptada para este equipo).
-
----
-
-## 🤝 Contribuir
-
-¿Quieres mejorar el proyecto? ¡Las contribuciones son bienvenidas!
-
-1. Fork el proyecto
-2. Crea una rama (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit tus cambios (`git commit -m 'Agrega nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Abre un Pull Request
-
-## 📧 Soporte
-
-Si encuentras algún problema:
-
-1. Verifica que tengas Python 3.10+
-2. Revisa que el entorno virtual esté activado
-3. Confirma que tengas todas las dependencias instaladas
-4. Verifica tu API Key de Gemini
-5. Abre un issue en GitHub con detalles del problema
+-   **Backend**: FastAPI, Python 3.10+
+-   **Frontend**: HTML5, CSS3 (Variables), JavaScript (Vanilla), Chart.js
+-   **IA**: Google Gemini 2.0 Flash
+-   **Procesamiento PDF**: PyMuPDF, PikePDF
+-   **Data**: Pandas, OpenPyXL
 
 ---
 
 ## 📄 Licencia
 
-MIT License - Libre para uso personal y comercial
+MIT License - Libre para uso personal y comercial.
 
 ---
 
-## 🙏 Créditos
-
-- **IA**: Google Gemini 2.0 Flash
-- **UI**: Diseño custom con Tkinter
-- **Encriptación**: cryptography (Fernet)
-- **PDF Processing**: PyMuPDF + pikepdf
-
----
-
-**Hecho con Cursor usando Python 3.13 y Gemini AI**
+**Hecho con ❤️ y mucha IA**
