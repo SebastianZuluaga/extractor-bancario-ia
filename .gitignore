@@ -39,3 +39,4 @@ data/
 *.xlsx
 *.log
 .gemini/
+.DS_Store
