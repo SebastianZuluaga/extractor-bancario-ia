@@ -1,22 +1,9 @@
-# 🔒 Archivos sensibles (PDFs y Excel del usuario)
-*.pdf
-*.xlsx
-*.xls
-
-# 🔐 Configuración local (guardada en ~/.extractor_bancario)
-config.enc
-*.key
-.env
-
-# 🐍 Python
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-venv/
-env/
-ENV/
 build/
 develop-eggs/
 dist/
@@ -29,34 +16,26 @@ parts/
 sdist/
 var/
 wheels/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# 💻 Sistema operativo
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# Virtual Environment
+venv/
+env/
+ENV/
+.env
+.venv/
 
-# 🔧 IDEs
+# IDEs
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
-.project
-.pydevproject
-.settings/
 
-# 📝 Logs y temporales
-logs/
+# Project specific
+data/
+*.pdf
+*.xlsx
 *.log
-*.tmp
-*.temp
-*.bak
-*.backup
-
+.gemini/

@@ -8,8 +8,8 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, scrolledtext, ttk
 
-from config_segura import ConfigSegura
-from logging_utils import configurar_logger
+from app.core.config import SecureConfig
+from app.core.logger import setup_logger
 
 
 # 🎨 Paleta de colores moderna (mejorada para legibilidad)
@@ -170,7 +170,7 @@ class ModernButton(tk.Canvas):
         self.after(45, self.animate_glow)
 
 
-logger, LOG_PATH = configurar_logger("app.ui")
+logger, LOG_PATH = setup_logger("app.ui")
 
 
 class ExtractorModerno:
@@ -191,7 +191,7 @@ class ExtractorModerno:
         self.root.resizable(False, False)
         
         # Configuración segura
-        self.config_segura = ConfigSegura()
+        self.config_segura = SecureConfig()
         self.logger = logger
         self.log_file_path = LOG_PATH
         self.secure_dir = Path(self.config_segura.get_ubicacion())

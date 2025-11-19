@@ -31,7 +31,7 @@ from logging_utils import configurar_logger
 logger, _ = configurar_logger("app.config")
 
 
-class ConfigSegura:
+class SecureConfig:
     """Gestiona el almacenamiento cifrado de credenciales sensibles."""
 
     SERVICE_NAME = "ExtractorBancarioIA"

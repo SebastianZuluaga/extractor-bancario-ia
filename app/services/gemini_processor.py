@@ -17,10 +17,9 @@ import pandas as pd
 from PIL import Image
 from pikepdf import Pdf
 
-from logging_utils import configurar_logger
+from app.core.logger import setup_logger
 
-
-logger, _ = configurar_logger("app.procesador")
+logger, _ = setup_logger("app.processor")
 
 
 PromptDict = Dict[str, str]
@@ -193,7 +192,7 @@ def _limpiar_valor_monetario(valor: object) -> float:
 
 
 @dataclass
-class ProcesadorGemini:
+class GeminiProcessor:
     api_key: str
     password: str
     carpeta: str
@@ -271,7 +270,8 @@ class ProcesadorGemini:
             documento = fitz.open(pdf_path)
             imagenes = []
             for pagina in documento:
-                pix = pagina.get_pixmap(matrix=fitz.Matrix(2, 2))
+                # Reducir resolución para mejorar velocidad (1.5 en vez de 2.0)
+                pix = pagina.get_pixmap(matrix=fitz.Matrix(1.5, 1.5))
                 img = Image.open(io.BytesIO(pix.tobytes("png")))
                 imagenes.append(img)
             documento.close()
@@ -563,3 +563,154 @@ class ProcesadorGemini:
             return None
 
 
+    def generar_recomendaciones(self, df: pd.DataFrame) -> Dict[str, str]:
+        """Genera recomendaciones financieras usando Gemini."""
+        if df is None or df.empty:
+            return {"tip": "No data available", "advice": "Upload statements to get started."}
+
+        # Calcular resumen para el prompt
+        total_gastos = df[df['valor'] < 0]['valor'].sum()
+        top_categorias = df[df['valor'] < 0].groupby('categoria')['valor'].sum().sort_values().head(3)
+        
+        prompt = f"""
+        Actúa como un asesor financiero experto. Basado en estos datos de gastos mensuales:
+        - Total Gastos: {total_gastos:,.0f}
+        - Top Categorías: {top_categorias.to_dict()}
+        
+        Genera dos consejos breves y directos en formato JSON:
+        1. "tip": Un consejo específico orientado a una meta de ahorro.
+        2. "advice": Una acción concreta para reducir gastos en la categoría más alta.
+        
+        Formato JSON esperado:
+        {{"tip": "...", "advice": "..."}}
+        """
+        
+        try:
+            respuesta = self._invocar_modelo([prompt])
+            return json.loads(_limpiar_salida_json(respuesta).get("transacciones", [{}])[0] if "transacciones" in _limpiar_salida_json(respuesta) else respuesta)
+        except:
+            # Fallback simple parsing or default
+            return {
+                "tip": "Review your largest expenses to find savings opportunities.",
+                "advice": "Try to reduce discretionary spending by 10% this month."
+            }
+
+    def obtener_datos_consolidados(self) -> Dict[str, object]:
+        """Procesa PDFs y retorna datos consolidados para el dashboard."""
+        self.configurar_gemini()
+        
+        pdfs = sorted([p for p in self._carpeta_path.glob("*.pdf") if not p.name.endswith(".temp.pdf")])
+        dfs = []
+        
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        def procesar_pdf_individual(pdf_path):
+            try:
+                temp_pdf = self.desbloquear_pdf(pdf_path)
+                if not temp_pdf: return None
+                
+                imagenes = self.pdf_a_imagenes(temp_pdf)
+                if not imagenes: 
+                    temp_pdf.unlink(missing_ok=True)
+                    return None
+                    
+                df = self.extraer_transacciones(imagenes, pdf_path.stem)
+                if df is not None and not df.empty:
+                    df = self._normalizar_dataframe(df)
+                    df = self.clasificar_gastos(df)
+                
+                temp_pdf.unlink(missing_ok=True)
+                return df
+            except Exception as e:
+                logger.error(f"Error procesando {pdf_path}: {e}")
+                return None
+
+        # Procesar en paralelo
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = [executor.submit(procesar_pdf_individual, p) for p in pdfs]
+            for future in as_completed(futures):
+                result = future.result()
+                if result is not None:
+                    dfs.append(result)
+            
+        if not dfs:
+            return {
+                "total_balance": 0,
+                "monthly_income": 0,
+                "monthly_expenses": 0,
+                "categories": [],
+                "recommendations": None
+            }
+            
+        df_total = pd.concat(dfs, ignore_index=True)
+        
+        # Preparar el texto de las transacciones para el prompt
+        transacciones_texto = df_total.to_json(orient="records", date_format="iso")
+
+        prompt = f"""
+        Actúa como un Analista Financiero Senior experto. Analiza el siguiente texto extraído de extractos bancarios.
+        
+        Tu objetivo es generar un JSON estructurado con la siguiente información:
+        1. "total_balance": El saldo total consolidado (número).
+        2. "monthly_income": Suma de todos los depósitos/ingresos (número positivo).
+        3. "monthly_expenses": Suma de todos los retiros/gastos (número positivo).
+        4. "categories": Una lista de objetos con "name" (nombre de categoría), "spent" (monto gastado) y "budget" (presupuesto sugerido basado en reglas 50/30/20).
+           - Categorías sugeridas: Vivienda, Alimentación, Transporte, Entretenimiento, Servicios, Otros.
+        5. "recommendations": Un objeto con dos campos de texto:
+           - "tip": Un análisis profundo de los patrones de gasto. Identifica gastos hormiga o innecesarios específicos.
+           - "advice": 3 pasos de acción concretos y numéricos para mejorar la salud financiera este mes (ej: "Reduce gastos en Uber en un 20%").
+
+        Formato de salida JSON estricto:
+        {{
+            "total_balance": 0.0,
+            "monthly_income": 0.0,
+            "monthly_expenses": 0.0,
+            "categories": [
+                {{"name": "Category Name", "spent": 0.0, "budget": 0.0}}
+            ],
+            "recommendations": {{
+                "tip": "Texto del análisis...",
+                "advice": "Texto de los pasos de acción..."
+            }}
+        }}
+
+        Texto del extracto:
+        {transacciones_texto}
+        """
+        
+        # Asumimos 'valor' negativo para gastos, positivo para ingresos
+        # A veces los extractos traen todo positivo y hay que inferir, pero por ahora usamos la lógica estándar
+        # Si es tarjeta de crédito, todo suele ser gasto (positivo o negativo según el banco)
+        # Ajuste rápido: si columna 'valor' existe
+        
+        if 'valor' not in df_total.columns:
+            df_total['valor'] = 0.0
+            
+        # Normalizar signos: gastos negativos, ingresos positivos
+        # Heurística simple: si la mayoría son positivos y es TC, convertirlos a negativo
+        # Por seguridad, asumimos que el usuario revisará.
+        
+        ingresos = df_total[df_total['valor'] > 0]['valor'].sum()
+        gastos = df_total[df_total['valor'] < 0]['valor'].sum()
+        balance = ingresos + gastos
+        
+        # Categorías
+        cats_group = df_total[df_total['valor'] < 0].groupby('categoria')['valor'].sum().abs()
+        categories_data = []
+        for cat, amount in cats_group.items():
+            categories_data.append({
+                "name": cat,
+                "spent": float(amount),
+                "budget": float(amount) * 1.2 # Mock budget
+            })
+            
+        # Recomendaciones
+        recs = self.generar_recomendaciones(df_total)
+        
+        return {
+            "total_balance": float(balance),
+            "monthly_income": float(ingresos),
+            "monthly_expenses": float(gastos),
+            "categories": categories_data,
+            "recommendations": recs
+        }

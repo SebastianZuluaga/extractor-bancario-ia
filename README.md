@@ -95,7 +95,35 @@ source venv/bin/activate
 python3 app_moderna.py
 ```
 
-### Opción 3: Doble click
+### Opción 3: API HTTP con Docker (recomendada para compartir)
+
+Requiere Docker instalado.
+
+```bash
+# Construir imagen
+docker build -t extractor-ia .
+
+# Ejecutar (la API queda en http://localhost:8000)
+docker run --rm -p 8000:8000 \
+  -e GEMINI_API_KEY="tu_api_key" \
+  extractor-ia
+
+# Probar salud
+curl http://localhost:8000/salud
+
+# Procesar PDFs (múltiples -F files=@...)
+curl -X POST "http://localhost:8000/procesar" \
+  -F "files=@/ruta/a/tu1.pdf" \
+  -F "files=@/ruta/a/tu2.pdf" \
+  -F "password=CONTRASEÑA_O_VACIO" \
+  --output Extractos_Consolidados.xlsx
+```
+
+Notas:
+- Puedes definir `GEMINI_API_KEY` como variable de entorno para no enviarla en el request.
+- El nombre del archivo de salida incluye timestamp para evitar sobrescritura.
+
+### Opción 4: Doble click
 
 Hacer doble click en `EJECUTAR.sh` desde Finder
 
@@ -117,6 +145,29 @@ Hacer doble click en `EJECUTAR.sh` desde Finder
 1. Ejecutar la aplicación (configuración ya cargada)
 2. Click en **"🚀 PROCESAR EXTRACTOS"**
 3. ¡Listo!
+
+### Opción 5: API con Docker Compose
+
+```bash
+# 1) Crear archivo .env (no se sube al repo)
+echo "GEMINI_API_KEY=TU_API_KEY" > .env
+
+# 2) Levantar la API
+docker compose up -d --build
+
+# 3) Probar salud
+curl http://localhost:8000/salud
+
+# 4) Procesar PDFs
+curl -X POST "http://localhost:8000/procesar" \
+  -F "files=@/ruta/a/tu1.pdf" \
+  -F "files=@/ruta/a/tu2.pdf" \
+  -F "password=CONTRASEÑA_O_VACIO" \
+  --output Extractos_Consolidados.xlsx
+
+# 5) Apagar
+docker compose down
+```
 
 ### **Editar Configuración:**
 

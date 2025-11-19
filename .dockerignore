@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Entornos
+venv/
+.env
+
+# Artefactos locales / SO
+.DS_Store
+.git/
+.gitignore
+
+# Datos del usuario
+*.pdf
+*.xlsx
+*.xls
+logs/
+*.log
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Construcción
+build/
+dist/
+*.egg-info/
+
+

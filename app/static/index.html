@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Finances - Desktop</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <h2>Finances<span class="dot">.</span></h2>
+            </div>
+
+            <nav class="side-nav">
+                <button class="nav-item active" data-target="view-dashboard">
+                    <span class="icon">📊</span> Dashboard
+                </button>
+                <button class="nav-item" data-target="view-upload">
+                    <span class="icon">📁</span> Upload Data
+                </button>
+                <button class="nav-item" data-target="view-goals">
+                    <span class="icon">🎯</span> Goals
+                </button>
+            </nav>
+
+            <div class="user-profile">
+                <div class="avatar">U</div>
+                <div class="user-info">
+                    <span class="name">User</span>
+                    <span class="status">Pro Plan</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- VIEW: DASHBOARD -->
+            <div id="view-dashboard" class="view active">
+                <header class="top-bar">
+                    <h1>Dashboard Overview</h1>
+                    <div class="date-display" id="current-date">October 2023</div>
+                </header>
+
+                <!-- Summary Cards -->
+                <div class="grid-row summary-cards">
+                    <div class="card summary-card balance">
+                        <span class="label">Total Balance</span>
+                        <h2 id="total-balance">$0</h2>
+                        <span class="trend positive">+0% vs last month</span>
+                    </div>
+                    <div class="card summary-card income">
+                        <span class="label">Income</span>
+                        <h2 id="monthly-income">$0</h2>
+                    </div>
+                    <div class="card summary-card expenses">
+                        <span class="label">Expenses</span>
+                        <h2 id="monthly-expenses">$0</h2>
+                    </div>
+                </div>
+
+                <!-- Charts & Goals Row -->
+                <div class="grid-row charts-row">
+                    <div class="card chart-card">
+                        <h3>Spending Breakdown</h3>
+                        <div class="chart-container">
+                            <canvas id="spendingChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card goals-widget">
+                        <div class="widget-header">
+                            <h3>My Goals</h3>
+                            <button class="btn-icon" id="add-goal-btn">+</button>
+                        </div>
+                        <div id="goals-list" class="goals-list">
+                            <!-- Goals injected here -->
+                            <div class="empty-state-small">No goals set.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI & Details Row -->
+                <div class="grid-row bottom-row">
+                    <div class="card ai-card-large">
+                        <h3>AI Financial Analyst</h3>
+                        <div id="ai-content" class="ai-content-area">
+                            <div class="empty-state">Upload statements to get professional insights.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: UPLOAD -->
+            <div id="view-upload" class="view">
+                <header class="top-bar">
+                    <h1>Upload Data</h1>
+                </header>
+                <div class="card upload-area-large">
+                    <div class="upload-box">
+                        <span class="icon-large">📄</span>
+                        <h3>Upload Bank Statements</h3>
+                        <p>Drag & drop PDFs here or click to browse</p>
+
+                        <div id="file-list" class="file-list"></div>
+
+                        <div class="credentials-form">
+                            <div class="input-group">
+                                <label>Gemini API Key</label>
+                                <input type="password" id="api-key" placeholder="Enter your API Key"
+                                    class="input-field">
+                            </div>
+                            <div class="input-group">
+                                <label>PDF Password (Optional)</label>
+                                <input type="password" id="pdf-password" placeholder="If your PDF is encrypted"
+                                    class="input-field">
+                            </div>
+                        </div>
+
+                        <button class="btn-primary-large" id="upload-btn">
+                            Process Statements
+                        </button>
+                        <input type="file" id="file-input" multiple accept=".pdf" style="display: none;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: GOALS (Detailed) -->
+            <div id="view-goals" class="view">
+                <header class="top-bar">
+                    <h1>Financial Goals</h1>
+                </header>
+                <div class="card goals-manager">
+                    <div id="goals-manager-list">
+                        <!-- Detailed goals list -->
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- MODAL: ADD GOAL -->
+        <div id="goal-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3>Add New Goal</h3>
+                <input type="text" id="goal-name" placeholder="Goal Name (e.g., New Car)" class="input-field">
+                <input type="number" id="goal-target" placeholder="Target Amount" class="input-field">
+                <input type="number" id="goal-current" placeholder="Current Savings" class="input-field">
+                <div class="modal-actions">
+                    <button class="btn-text" id="cancel-goal">Cancel</button>
+                    <button class="btn-primary" id="save-goal">Save Goal</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LOADER -->
+        <div id="loader-overlay" class="loader-overlay hidden">
+            <div class="loader-content">
+                <div class="spinner"></div>
+                <h3>Analyzing Finances...</h3>
+                <p>Generating insights and charts</p>
+            </div>
+        </div>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+
+</html>

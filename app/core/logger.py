@@ -9,6 +9,7 @@ heavy dependencies or causing circular imports.
 from __future__ import annotations
 
 import logging
+import datetime
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Tuple
@@ -19,12 +20,12 @@ _MAX_BYTES = 1_048_576  # 1 MiB
 _BACKUP_COUNT = 5
 
 
-def configurar_logger(nombre: str = DEFAULT_LOG_NAME) -> Tuple[logging.Logger, Path]:
+def setup_logger(name: str = DEFAULT_LOG_NAME) -> Tuple[logging.Logger, Path]:
     """Return a logger configured with a rotating file handler.
 
     Parameters
     ----------
-    nombre:
+    name:
         Name of the logger to configure.  Multiple calls with the same name
         reuse the existing logger without duplicating handlers.
 
@@ -34,21 +35,22 @@ def configurar_logger(nombre: str = DEFAULT_LOG_NAME) -> Tuple[logging.Logger, P
         The configured logger instance and the path to the log file.
     """
 
-    # Usar carpeta del proyecto en lugar de home para evitar problemas de permisos
-    config_dir = Path(__file__).parent / "logs"
-    config_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
+    # Crear directorio de logs si no existe
+    log_dir = Path("logs")
+    log_dir.mkdir(exist_ok=True)
 
-    log_path = config_dir / "extractor.log"
+    timestamp = datetime.datetime.now().strftime("%Y%m%d")
+    log_file = log_dir / f"app_{timestamp}.log"
 
-    logger = logging.getLogger(nombre)
+    logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
 
     # Avoid attaching multiple handlers when running the UI repeatedly.
-    if not any(isinstance(h, RotatingFileHandler) and getattr(h, "baseFilename", None) == str(log_path)
+    if not any(isinstance(h, RotatingFileHandler) and getattr(h, "baseFilename", None) == str(log_file)
                for h in logger.handlers):
         try:
             handler = RotatingFileHandler(
-                log_path,
+                log_file,
                 maxBytes=_MAX_BYTES,
                 backupCount=_BACKUP_COUNT,
                 encoding="utf-8",
@@ -76,8 +78,8 @@ def configurar_logger(nombre: str = DEFAULT_LOG_NAME) -> Tuple[logging.Logger, P
         )
         logger.addHandler(console_handler)
 
-    return logger, log_path
+    return logger, log_file
 
 
-__all__ = ["configurar_logger", "DEFAULT_LOG_NAME"]
+__all__ = ["setup_logger", "DEFAULT_LOG_NAME"]
 
